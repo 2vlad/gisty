@@ -27,6 +27,7 @@ struct FeedView: View {
     // Smart architecture dependencies (Etap 2)
     @State private var fetchScheduler: FetchScheduler?
     @State private var incrementalFetcher: IncrementalFetcher?
+    @State private var updateRouter: TelegramUpdateRouter?
     
     var body: some View {
         NavigationStack {
@@ -178,6 +179,19 @@ struct FeedView: View {
         )
         incrementalFetcher = fetcher
         
+        // 🎯 EVENT-DRIVEN: Create update router to handle TDLib events
+        let router = TelegramUpdateRouter(
+            dataManager: dataManager,
+            scheduler: scheduler,
+            incrementalFetcher: fetcher
+        )
+        updateRouter = router
+        
+        // Connect router to TelegramManager for event handling
+        telegram.updateRouter = router
+        
+        AppLogger.logTelegram("✅ Event-driven router connected to TelegramManager")
+        
         // Create message collector with smart dependencies
         let collector = MessageCollector(
             telegram: telegram,
@@ -187,7 +201,7 @@ struct FeedView: View {
         )
         messageCollector = collector
         
-        AppLogger.logData("✅ Smart architecture initialized: FetchScheduler + IncrementalFetcher")
+        AppLogger.logData("✅ Smart architecture initialized: FetchScheduler + IncrementalFetcher + UpdateRouter")
         
         // LLM setup (unchanged)
         let llm = LLMService(config: LLMService.Config(

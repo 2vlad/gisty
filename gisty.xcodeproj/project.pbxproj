@@ -7,11 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		24DE2F27F5AA46D18FB62321 /* EBGaramond-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 15B048D0EEC842A188926432 /* EBGaramond-Medium.ttf */; };
+		47C9EE419B1D4F1D88529CB8 /* EBGaramond-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 096481FA5A3948A98CA199D7 /* EBGaramond-Regular.ttf */; };
 		843726DC2EBF97F700970D36 /* TDLibKit in Frameworks */ = {isa = PBXBuildFile; productRef = 843726C22EBF615C00970D36 /* TDLibKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		096481FA5A3948A98CA199D7 /* EBGaramond-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "EBGaramond-Regular.ttf"; sourceTree = "<group>"; };
+		15B048D0EEC842A188926432 /* EBGaramond-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "EBGaramond-Medium.ttf"; sourceTree = "<group>"; };
+		1D9B62D417A1485C827ADE19 /* PPNeueMontreal-Thin.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "PPNeueMontreal-Thin.otf"; sourceTree = "<group>"; };
 		843726B32EBF615A00970D36 /* gisty.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = gisty.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9E0593D665BF48BD8191E58C /* PPNeueMontreal-Medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "PPNeueMontreal-Medium.otf"; sourceTree = "<group>"; };
+		B25D56D90E6D468DB45EB80D /* PPNeueMontreal-Italic.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "PPNeueMontreal-Italic.otf"; sourceTree = "<group>"; };
+		D45109F285CD49DB8C45A3D3 /* PPNeueMontreal-Book.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "PPNeueMontreal-Book.otf"; sourceTree = "<group>"; };
+		D92E343F8A3B4363815B54DD /* PPNeueMontreal-SemiBolditalic.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "PPNeueMontreal-SemiBolditalic.otf"; sourceTree = "<group>"; };
+		DB2B08F04E7042F0B5D7D13D /* PPNeueMontreal-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "PPNeueMontreal-Bold.otf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -39,6 +49,7 @@
 			children = (
 				843726B52EBF615A00970D36 /* gisty */,
 				843726B42EBF615A00970D36 /* Products */,
+				84B4D08E2ECB98CB00D99FBF /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -48,6 +59,21 @@
 				843726B32EBF615A00970D36 /* gisty.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		84B4D08E2ECB98CB00D99FBF /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				096481FA5A3948A98CA199D7 /* EBGaramond-Regular.ttf */,
+				15B048D0EEC842A188926432 /* EBGaramond-Medium.ttf */,
+				DB2B08F04E7042F0B5D7D13D /* PPNeueMontreal-Bold.otf */,
+				9E0593D665BF48BD8191E58C /* PPNeueMontreal-Medium.otf */,
+				D45109F285CD49DB8C45A3D3 /* PPNeueMontreal-Book.otf */,
+				1D9B62D417A1485C827ADE19 /* PPNeueMontreal-Thin.otf */,
+				B25D56D90E6D468DB45EB80D /* PPNeueMontreal-Italic.otf */,
+				D92E343F8A3B4363815B54DD /* PPNeueMontreal-SemiBolditalic.otf */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -118,6 +144,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				47C9EE419B1D4F1D88529CB8 /* EBGaramond-Regular.ttf in Resources */,
+				24DE2F27F5AA46D18FB62321 /* EBGaramond-Medium.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,6 +288,14 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIAppFonts_0 = "EBGaramond-Regular.ttf";
+				INFOPLIST_KEY_UIAppFonts_1 = "EBGaramond-Medium.ttf";
+				INFOPLIST_KEY_UIAppFonts_2 = "PPNeueMontreal-Bold.otf";
+				INFOPLIST_KEY_UIAppFonts_3 = "PPNeueMontreal-Medium.otf";
+				INFOPLIST_KEY_UIAppFonts_4 = "PPNeueMontreal-Book.otf";
+				INFOPLIST_KEY_UIAppFonts_5 = "PPNeueMontreal-Thin.otf";
+				INFOPLIST_KEY_UIAppFonts_6 = "PPNeueMontreal-Italic.otf";
+				INFOPLIST_KEY_UIAppFonts_7 = "PPNeueMontreal-SemiBolditalic.otf";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -304,6 +340,14 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIAppFonts_0 = "EBGaramond-Regular.ttf";
+				INFOPLIST_KEY_UIAppFonts_1 = "EBGaramond-Medium.ttf";
+				INFOPLIST_KEY_UIAppFonts_2 = "PPNeueMontreal-Bold.otf";
+				INFOPLIST_KEY_UIAppFonts_3 = "PPNeueMontreal-Medium.otf";
+				INFOPLIST_KEY_UIAppFonts_4 = "PPNeueMontreal-Book.otf";
+				INFOPLIST_KEY_UIAppFonts_5 = "PPNeueMontreal-Thin.otf";
+				INFOPLIST_KEY_UIAppFonts_6 = "PPNeueMontreal-Italic.otf";
+				INFOPLIST_KEY_UIAppFonts_7 = "PPNeueMontreal-SemiBolditalic.otf";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
