@@ -103,7 +103,7 @@ struct GistDetailView: View {
             }
             
             Text(gist.summary)
-                .font(.body)
+                .font(.custom("EBGaramond-Regular", size: 18))
                 .lineSpacing(4)
         }
     }
@@ -132,7 +132,7 @@ struct GistDetailView: View {
                         }
                         
                         Text(bullet)
-                            .font(.body)
+                            .font(.custom("EBGaramond-Regular", size: 17))
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -185,7 +185,7 @@ struct GistDetailView: View {
                     .padding()
                     .background(Color.black)
                     .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .cornerRadius(16)
             }
             
             // Regenerate Button
@@ -195,7 +195,7 @@ struct GistDetailView: View {
                     .padding()
                     .background(Color.gray)
                     .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .cornerRadius(16)
             }
             .disabled(isRegenerating)
         }
@@ -247,7 +247,20 @@ struct GistDetailView: View {
                     return
                 }
                 
-                let collector = MessageCollector(telegram: telegram, dataManager: dataManager)
+                // Create smart architecture dependencies
+                let scheduler = FetchScheduler(dataManager: dataManager)
+                let incrementalFetcher = IncrementalFetcher(
+                    telegram: telegram,
+                    scheduler: scheduler
+                )
+                
+                let collector = MessageCollector(
+                    telegram: telegram,
+                    dataManager: dataManager,
+                    scheduler: scheduler,
+                    incrementalFetcher: incrementalFetcher
+                )
+                
                 let llm = LLMService(config: LLMService.Config(
                     provider: .openrouter,
                     model: "anthropic/claude-haiku-4.5",  // ⚠️ HAIKU 4.5!
@@ -342,8 +355,10 @@ struct RegeneratingOverlay: View {
                     .foregroundColor(.white)
             }
             .padding(32)
-            .background(Color(uiColor: .systemGray5))
-            .cornerRadius(16)
+            .background(
+                Color(red: 0.953, green: 0.949, blue: 0.941) // #F3F2F0
+            )
+            .cornerRadius(20)
         }
     }
 }

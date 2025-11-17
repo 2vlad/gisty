@@ -24,6 +24,10 @@ struct FeedView: View {
     @State private var llmService: LLMService?
     @State private var gistGenerator: GistGenerator?
     
+    // Smart architecture dependencies (Etap 2)
+    @State private var fetchScheduler: FetchScheduler?
+    @State private var incrementalFetcher: IncrementalFetcher?
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -40,26 +44,20 @@ struct FeedView: View {
                         .cornerRadius(10)
                 }
             }
-            .navigationTitle(L.appName)
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Image("logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 28)
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showSettings = true }) {
                         Image(systemName: "gearshape")
                     }
                 }
-            }
-            .onAppear {
-                // Make navigation title 20% larger
-                let appearance = UINavigationBarAppearance()
-                appearance.configureWithDefaultBackground()
-                
-                // Large title font (20% larger)
-                let largeTitleFont = UIFont.systemFont(ofSize: 40.8, weight: .bold) // Default 34 * 1.2 = 40.8
-                appearance.largeTitleTextAttributes = [.font: largeTitleFont]
-                
-                UINavigationBar.appearance().standardAppearance = appearance
-                UINavigationBar.appearance().scrollEdgeAppearance = appearance
             }
             .task {
                 await onAppear()
@@ -107,7 +105,7 @@ struct FeedView: View {
                 .padding()
                 .background(Color.black)
                 .foregroundColor(.white)
-                .cornerRadius(12)
+                .cornerRadius(16)
             }
             .disabled(isRefreshing)
         }
@@ -121,7 +119,7 @@ struct FeedView: View {
                     .onTapGesture {
                         selectedGist = gist
                     }
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
                     .listRowSeparator(.hidden)
             }
         }
@@ -168,7 +166,30 @@ struct FeedView: View {
             return
         }
         
-        let collector = MessageCollector(telegram: telegram, dataManager: dataManager)
+        // 🚀 ETAP 2: Smart Architecture
+        // Create scheduler for 5-minute intervals and prioritization
+        let scheduler = FetchScheduler(dataManager: dataManager)
+        fetchScheduler = scheduler
+        
+        // Create incremental fetcher (only new messages!)
+        let fetcher = IncrementalFetcher(
+            telegram: telegram,
+            scheduler: scheduler
+        )
+        incrementalFetcher = fetcher
+        
+        // Create message collector with smart dependencies
+        let collector = MessageCollector(
+            telegram: telegram,
+            dataManager: dataManager,
+            scheduler: scheduler,
+            incrementalFetcher: fetcher
+        )
+        messageCollector = collector
+        
+        AppLogger.logData("✅ Smart architecture initialized: FetchScheduler + IncrementalFetcher")
+        
+        // LLM setup (unchanged)
         let llm = LLMService(config: LLMService.Config(
             provider: .openrouter,
             model: "anthropic/claude-haiku-4.5",  // ⚠️ HAIKU 4.5!
@@ -176,19 +197,18 @@ struct FeedView: View {
             maxTokens: 1000,
             temperature: 0.3
         ))
+        llmService = llm
+        
         let generator = GistGenerator(
             messageCollector: collector,
             llmService: llm,
             dataManager: dataManager
         )
+        gistGenerator = generator
         
         AppLogger.logAI("✅ LLM Service configured: OpenRouter (Claude Haiku 4.5)")
         
-        messageCollector = collector
-        llmService = llm
-        gistGenerator = generator
-        
-        print("✅ LLM services initialized")
+        print("✅ Services initialized with smart architecture v2")
     }
     
     private func autoGenerateIfNeeded() async {
@@ -306,7 +326,7 @@ struct GistCard: View {
             
             // Summary
             Text(gist.summary)
-                .font(.body)
+                .font(.custom("EBGaramond-Regular", size: 18))
                 .lineLimit(isExpanded ? nil : 3)
             
             if !isExpanded && gist.summary.count > 150 {
@@ -325,9 +345,10 @@ struct GistCard: View {
                     ForEach(gist.bullets.prefix(isExpanded ? 100 : 3), id: \.self) { bullet in
                         HStack(alignment: .top, spacing: 8) {
                             Text("•")
+                                .font(.custom("EBGaramond-Regular", size: 16))
                                 .foregroundColor(.primary)
                             Text(bullet)
-                                .font(.subheadline)
+                                .font(.custom("EBGaramond-Regular", size: 16))
                         }
                     }
                 }
@@ -345,9 +366,11 @@ struct GistCard: View {
                 Spacer()
             }
         }
-        .padding()
-        .background(Color(uiColor: .secondarySystemBackground))
-        .cornerRadius(12)
+        .padding(14)
+        .background(
+            Color(red: 0.953, green: 0.949, blue: 0.941) // #F3F2F0
+        )
+        .cornerRadius(20)
     }
     
     private var periodText: String {
