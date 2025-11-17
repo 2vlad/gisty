@@ -31,6 +31,8 @@ struct FeedView: View {
     @State private var updateRouter: TelegramUpdateRouter?
     
     var body: some View {
+        let _ = print("=== FeedView body called ===")
+        
         NavigationStack {
             ZStack {
                 if gists.isEmpty && !isRefreshing {
@@ -51,8 +53,10 @@ struct FeedView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Image("logo")
                         .resizable()
-                        .scaledToFit()
+                        .renderingMode(.original)
+                        .aspectRatio(contentMode: .fit)
                         .frame(height: 34)
+                        .clipShape(Rectangle())
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -62,6 +66,7 @@ struct FeedView: View {
                 }
             }
             .task {
+                print(">>> .task modifier called! <<<")
                 await onAppear()
             }
             .alert(L.error, isPresented: $showError) {
@@ -137,6 +142,8 @@ struct FeedView: View {
     // MARK: - Methods
     
     private func onAppear() async {
+        print(">>> onAppear() called! <<<")
+        
         // 🔍 DETAILED FONT DEBUG LOGGING
         print("================================================================================")
         print("FONT DEBUGGING SESSION")

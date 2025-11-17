@@ -36,6 +36,9 @@ struct gistyApp: App {
             }
             .animation(.easeInOut(duration: 0.3), value: isLoading)
             .task {
+                // Register custom fonts programmatically
+                FontRegistration.registerFonts()
+                
                 // Initialize Telegram client
                 do {
                     AppLogger.logAppEvent("📱 Initializing Telegram client...")
