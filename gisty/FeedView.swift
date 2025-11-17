@@ -120,7 +120,7 @@ struct FeedView: View {
                     .onTapGesture {
                         selectedGist = gist
                     }
-                    .listRowInsets(EdgeInsets(top: 1, leading: 8, bottom: 1, trailing: 8))
+                    .listRowInsets(EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8))
                     .listRowSeparator(.hidden)
             }
         }
@@ -136,15 +136,76 @@ struct FeedView: View {
     // MARK: - Methods
     
     private func onAppear() async {
-        // DEBUG: Print all available fonts
-        print("=== Available Font Families ===")
-        for family in UIFont.familyNames.sorted() {
-            print("\nFamily: \(family)")
-            for font in UIFont.fontNames(forFamilyName: family) {
-                print("  - \(font)")
+        // 🔍 DETAILED FONT DEBUG LOGGING
+        print("\n" + String(repeating: "=", count: 80))
+        print("🔍 FONT DEBUGGING SESSION")
+        print(String(repeating: "=", count: 80))
+        
+        // 1. Check if font files exist
+        print("\n📁 CHECKING FONT FILES:")
+        let fontFiles = [
+            "EBGaramond-Regular.ttf",
+            "EBGaramond-Medium.ttf",
+            "PPNeueMontreal-Bold.otf"
+        ]
+        
+        for fontFile in fontFiles {
+            if let path = Bundle.main.path(forResource: fontFile.replacingOccurrences(of: ".ttf", with: "").replacingOccurrences(of: ".otf", with: ""), ofType: fontFile.hasSuffix(".ttf") ? "ttf" : "otf", inDirectory: "Resources/Fonts") {
+                print("  ✅ Found: \(fontFile) at \(path)")
+            } else if let path = Bundle.main.path(forResource: fontFile, ofType: nil) {
+                print("  ✅ Found: \(fontFile) at \(path)")
+            } else {
+                print("  ❌ NOT FOUND: \(fontFile)")
             }
         }
-        print("=== End of Fonts ===")
+        
+        // 2. List ALL available font families
+        print("\n📋 ALL AVAILABLE FONT FAMILIES (\(UIFont.familyNames.count) total):")
+        let garamondFamilies = UIFont.familyNames.sorted().filter { $0.contains("Garamond") || $0.contains("garamond") }
+        
+        if !garamondFamilies.isEmpty {
+            print("\n🎯 GARAMOND FONTS FOUND:")
+            for family in garamondFamilies {
+                print("  Family: \(family)")
+                for font in UIFont.fontNames(forFamilyName: family) {
+                    print("    - \(font)")
+                }
+            }
+        } else {
+            print("  ❌ NO GARAMOND FONTS FOUND!")
+        }
+        
+        // 3. Try to load EB Garamond font directly
+        print("\n🧪 TESTING FONT LOADING:")
+        let testFontNames = ["EB Garamond", "EBGaramond", "EBGaramond-Regular", "EB Garamond Regular"]
+        for fontName in testFontNames {
+            if let font = UIFont(name: fontName, size: 18) {
+                print("  ✅ SUCCESS: UIFont(name: '\(fontName)', size: 18) = \(font.fontName)")
+            } else {
+                print("  ❌ FAILED: UIFont(name: '\(fontName)', size: 18)")
+            }
+        }
+        
+        // 4. Check Info.plist registration
+        print("\n📝 INFO.PLIST FONT REGISTRATION:")
+        if let fonts = Bundle.main.object(forInfoDictionaryKey: "UIAppFonts") as? [String] {
+            print("  Found \(fonts.count) registered fonts:")
+            for font in fonts {
+                print("    - \(font)")
+            }
+        } else {
+            print("  ❌ NO UIAppFonts FOUND in Info.plist!")
+        }
+        
+        // 5. List first 10 font families for reference
+        print("\n📚 SAMPLE OF AVAILABLE FAMILIES (first 10):")
+        for family in UIFont.familyNames.sorted().prefix(10) {
+            print("  - \(family)")
+        }
+        
+        print("\n" + String(repeating: "=", count: 80))
+        print("END OF FONT DEBUGGING")
+        print(String(repeating: "=", count: 80) + "\n")
         
         loadGists()
         setupServices()
