@@ -46,11 +46,11 @@ struct FeedView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .principal) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(height: 28)
+                        .frame(height: 112)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
