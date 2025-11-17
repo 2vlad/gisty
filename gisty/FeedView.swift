@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import OSLog
 
 struct FeedView: View {
     @EnvironmentObject var dataManager: DataManager
@@ -51,7 +52,7 @@ struct FeedView: View {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(height: 112)
+                        .frame(height: 34)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -137,75 +138,96 @@ struct FeedView: View {
     
     private func onAppear() async {
         // 🔍 DETAILED FONT DEBUG LOGGING
-        print("\n" + String(repeating: "=", count: 80))
-        print("🔍 FONT DEBUGGING SESSION")
-        print(String(repeating: "=", count: 80))
+        print("================================================================================")
+        print("FONT DEBUGGING SESSION")
+        print("================================================================================")
         
         // 1. Check if font files exist
-        print("\n📁 CHECKING FONT FILES:")
-        let fontFiles = [
-            "EBGaramond-Regular.ttf",
-            "EBGaramond-Medium.ttf",
-            "PPNeueMontreal-Bold.otf"
-        ]
+        print("")
+        print("CHECKING FONT FILES:")
+        let fontFiles = ["EBGaramond-Regular.ttf", "EBGaramond-Medium.ttf", "PPNeueMontreal-Bold.otf"]
         
         for fontFile in fontFiles {
             if let path = Bundle.main.path(forResource: fontFile.replacingOccurrences(of: ".ttf", with: "").replacingOccurrences(of: ".otf", with: ""), ofType: fontFile.hasSuffix(".ttf") ? "ttf" : "otf", inDirectory: "Resources/Fonts") {
-                print("  ✅ Found: \(fontFile) at \(path)")
+                print("  ✅ Found: \(fontFile)")
+                print("     Path: \(path)")
             } else if let path = Bundle.main.path(forResource: fontFile, ofType: nil) {
-                print("  ✅ Found: \(fontFile) at \(path)")
+                print("  ✅ Found: \(fontFile)")
+                print("     Path: \(path)")
             } else {
                 print("  ❌ NOT FOUND: \(fontFile)")
             }
         }
         
-        // 2. List ALL available font families
-        print("\n📋 ALL AVAILABLE FONT FAMILIES (\(UIFont.familyNames.count) total):")
-        let garamondFamilies = UIFont.familyNames.sorted().filter { $0.contains("Garamond") || $0.contains("garamond") }
+        print("")
+        print("Step 1 completed")
+        
+        // 2. Check for Garamond fonts
+        print("")
+        print("SEARCHING FOR GARAMOND FONTS:")
+        let allFamilies = UIFont.familyNames.sorted()
+        print("Total font families: \(allFamilies.count)")
+        
+        let garamondFamilies = allFamilies.filter { $0.lowercased().contains("garamond") }
         
         if !garamondFamilies.isEmpty {
-            print("\n🎯 GARAMOND FONTS FOUND:")
+            print("GARAMOND FONTS FOUND:")
             for family in garamondFamilies {
                 print("  Family: \(family)")
-                for font in UIFont.fontNames(forFamilyName: family) {
+                let fonts = UIFont.fontNames(forFamilyName: family)
+                for font in fonts {
                     print("    - \(font)")
                 }
             }
         } else {
-            print("  ❌ NO GARAMOND FONTS FOUND!")
+            print("❌ NO GARAMOND FONTS FOUND!")
         }
         
-        // 3. Try to load EB Garamond font directly
-        print("\n🧪 TESTING FONT LOADING:")
-        let testFontNames = ["EB Garamond", "EBGaramond", "EBGaramond-Regular", "EB Garamond Regular"]
+        print("")
+        print("Step 2 completed")
+        
+        // 3. Try to load EB Garamond
+        print("")
+        print("TESTING FONT LOADING:")
+        let testFontNames = ["EB Garamond", "EBGaramond", "EBGaramond-Regular"]
         for fontName in testFontNames {
             if let font = UIFont(name: fontName, size: 18) {
-                print("  ✅ SUCCESS: UIFont(name: '\(fontName)', size: 18) = \(font.fontName)")
+                print("  ✅ SUCCESS: '\(fontName)' -> \(font.fontName)")
             } else {
-                print("  ❌ FAILED: UIFont(name: '\(fontName)', size: 18)")
+                print("  ❌ FAILED: '\(fontName)'")
             }
         }
         
-        // 4. Check Info.plist registration
-        print("\n📝 INFO.PLIST FONT REGISTRATION:")
+        print("")
+        print("Step 3 completed")
+        
+        // 4. Check Info.plist
+        print("")
+        print("INFO.PLIST REGISTRATION:")
         if let fonts = Bundle.main.object(forInfoDictionaryKey: "UIAppFonts") as? [String] {
-            print("  Found \(fonts.count) registered fonts:")
+            print("Found \(fonts.count) registered fonts:")
             for font in fonts {
-                print("    - \(font)")
+                print("  - \(font)")
             }
         } else {
-            print("  ❌ NO UIAppFonts FOUND in Info.plist!")
+            print("❌ NO UIAppFonts in Info.plist!")
         }
         
-        // 5. List first 10 font families for reference
-        print("\n📚 SAMPLE OF AVAILABLE FAMILIES (first 10):")
-        for family in UIFont.familyNames.sorted().prefix(10) {
+        print("")
+        print("Step 4 completed")
+        
+        // 5. Sample families
+        print("")
+        print("FIRST 10 FONT FAMILIES:")
+        for family in allFamilies.prefix(10) {
             print("  - \(family)")
         }
         
-        print("\n" + String(repeating: "=", count: 80))
+        print("")
+        print("================================================================================")
         print("END OF FONT DEBUGGING")
-        print(String(repeating: "=", count: 80) + "\n")
+        print("================================================================================")
+        print("")
         
         loadGists()
         setupServices()
@@ -422,16 +444,15 @@ struct GistCard: View {
                 }
             }
             
-            Divider()
-            
-            // Footer
+            // Footer (without divider and icon)
             HStack {
-                Label("\(gist.messagesCount)", systemImage: "message")
+                Text(messageCountText)
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
                 Spacer()
             }
+            .padding(.top, 4)
         }
         .padding(14)
         .background(
@@ -448,6 +469,37 @@ struct GistCard: View {
             return "Канал"
         case .group, .privateChat:
             return "Чат"
+        }
+    }
+    
+    private var messageCountText: String {
+        let count = gist.messagesCount
+        let isChannel = gist.source?.type == .channel
+        
+        if isChannel {
+            // Для каналов: "пост/поста/постов"
+            return "\(count) \(pluralForm(count: count, one: "пост", few: "поста", many: "постов"))"
+        } else {
+            // Для чатов: "сообщение/сообщения/сообщений"
+            return "\(count) \(pluralForm(count: count, one: "сообщение", few: "сообщения", many: "сообщений"))"
+        }
+    }
+    
+    private func pluralForm(count: Int, one: String, few: String, many: String) -> String {
+        let remainder10 = count % 10
+        let remainder100 = count % 100
+        
+        if remainder100 >= 11 && remainder100 <= 19 {
+            return many
+        }
+        
+        switch remainder10 {
+        case 1:
+            return one
+        case 2, 3, 4:
+            return few
+        default:
+            return many
         }
     }
 }
