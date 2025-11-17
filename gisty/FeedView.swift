@@ -120,7 +120,7 @@ struct FeedView: View {
                     .onTapGesture {
                         selectedGist = gist
                     }
-                    .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                    .listRowInsets(EdgeInsets(top: 1, leading: 8, bottom: 1, trailing: 8))
                     .listRowSeparator(.hidden)
             }
         }
@@ -136,6 +136,16 @@ struct FeedView: View {
     // MARK: - Methods
     
     private func onAppear() async {
+        // DEBUG: Print all available fonts
+        print("=== Available Font Families ===")
+        for family in UIFont.familyNames.sorted() {
+            print("\nFamily: \(family)")
+            for font in UIFont.fontNames(forFamilyName: family) {
+                print("  - \(font)")
+            }
+        }
+        print("=== End of Fonts ===")
+        
         loadGists()
         setupServices()
         
@@ -299,8 +309,6 @@ struct GistCard: View {
     let gist: Gist
     let telegram: TelegramManager
     
-    @State private var isExpanded = false
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
@@ -338,35 +346,19 @@ struct GistCard: View {
             
             Divider()
             
-            // Summary
-            Text(gist.summary)
-                .font(.custom("EBGaramond-Regular", size: 18))
-                .lineLimit(isExpanded ? nil : 3)
-            
-            if !isExpanded && gist.summary.count > 150 {
-                Button(L.readMore) {
-                    withAnimation {
-                        isExpanded = true
-                    }
-                }
-                .font(.caption)
-                .foregroundColor(.primary)
-            }
-            
-            // Bullets
+            // Bullets (main content)
             if !gist.bullets.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(gist.bullets.prefix(isExpanded ? 100 : 3), id: \.self) { bullet in
+                    ForEach(gist.bullets.prefix(5), id: \.self) { bullet in
                         HStack(alignment: .top, spacing: 8) {
                             Text("•")
-                                .font(.custom("EBGaramond-Regular", size: 16))
+                                .font(.custom("EB Garamond", size: 16))
                                 .foregroundColor(.primary)
                             Text(bullet)
-                                .font(.custom("EBGaramond-Regular", size: 16))
+                                .font(.custom("EB Garamond", size: 16))
                         }
                     }
                 }
-                .padding(.top, 4)
             }
             
             Divider()

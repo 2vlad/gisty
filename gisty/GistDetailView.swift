@@ -103,7 +103,7 @@ struct GistDetailView: View {
             }
             
             Text(gist.summary)
-                .font(.custom("EBGaramond-Regular", size: 18))
+                .font(.custom("EB Garamond", size: 18))
                 .lineSpacing(4)
         }
     }
@@ -132,7 +132,7 @@ struct GistDetailView: View {
                         }
                         
                         Text(bullet)
-                            .font(.custom("EBGaramond-Regular", size: 17))
+                            .font(.custom("EB Garamond", size: 17))
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
