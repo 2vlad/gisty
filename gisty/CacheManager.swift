@@ -17,7 +17,7 @@ class CacheManager: ObservableObject {
     
     // MARK: - Configuration
     
-    struct Config {
+    struct Config: Sendable {
         /// Chunk interval in seconds (default: 15 minutes)
         var chunkInterval: TimeInterval = 15 * 60
         
@@ -45,16 +45,16 @@ class CacheManager: ObservableObject {
     
     // MARK: - Initialization
     
-    init(modelContext: ModelContext, config: Config = Config()) {
+    init(modelContext: ModelContext, config: Config? = nil) {
         self.modelContext = modelContext
-        self.config = config
+        self.config = config ?? Config()
         
         // Configure L1 caches
-        messageCache.countLimit = config.l1CacheSize
+        messageCache.countLimit = self.config.l1CacheSize
         chunkCache.countLimit = 200
         summaryCache.countLimit = 500
         
-        print("✅ CacheManager initialized (L1 size: \(config.l1CacheSize))")
+        AppLogger.logCache("✅ CacheManager initialized (L1 size: \(self.config.l1CacheSize))")
     }
     
     // MARK: - Message Cache Operations
@@ -418,19 +418,22 @@ class CacheManager: ObservableObject {
 
 // MARK: - Wrapper Classes (for NSCache)
 
+@MainActor
 private class CachedMessageWrapper {
     let message: CachedMessage
-    nonisolated init(_ message: CachedMessage) { self.message = message }
+    init(_ message: CachedMessage) { self.message = message }
 }
 
+@MainActor
 private class MessageChunkWrapper {
     let chunk: MessageChunk
-    nonisolated init(_ chunk: MessageChunk) { self.chunk = chunk }
+    init(_ chunk: MessageChunk) { self.chunk = chunk }
 }
 
+@MainActor
 private class CachedSummaryWrapper {
     let summary: CachedSummary
-    nonisolated init(_ summary: CachedSummary) { self.summary = summary }
+    init(_ summary: CachedSummary) { self.summary = summary }
 }
 
 // MARK: - Supporting Types

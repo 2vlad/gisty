@@ -9,45 +9,38 @@ import SwiftUI
 
 struct SettingsView: View {
     @StateObject private var settings = UserSettings.shared
-    @State private var openAIApiKey: String = ""
-    @State private var showApiKeyInput = false
-    @State private var saveMessage: String?
-    @State private var showSaveMessage = false
     
     var body: some View {
         NavigationStack {
             List {
-                // API Configuration Section
+                // Language Section
                 Section {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("OpenAI API Key")
-                                .font(.body)
-                            if ConfigurationManager.shared.hasValidOpenAICredentials {
-                                Text("Configured ✓")
-                                    .font(.caption)
-                                    .foregroundColor(.green)
-                            } else {
-                                Text("Not configured")
-                                    .font(.caption)
-                                    .foregroundColor(.orange)
+                    ForEach(Language.allCases, id: \.self) { language in
+                        Button {
+                            settings.language = language
+                        } label: {
+                            HStack {
+                                Text(language.icon)
+                                    .font(.title3)
+                                    .frame(width: 30)
+                                
+                                Text(language.rawValue)
+                                    .foregroundColor(.primary)
+                                
+                                Spacer()
+                                
+                                if settings.language == language {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.primary)
+                                        .fontWeight(.semibold)
+                                }
                             }
-                        }
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            openAIApiKey = ConfigurationManager.shared.openAIApiKey ?? ""
-                            showApiKeyInput = true
-                        }) {
-                            Text(ConfigurationManager.shared.hasValidOpenAICredentials ? "Update" : "Add")
-                                .foregroundColor(.blue)
                         }
                     }
                 } header: {
-                    Text("API Configuration")
+                    Text(L.gistLanguage)
                 } footer: {
-                    Text("OpenAI API key is required for generating gist summaries. Get your key from platform.openai.com")
+                    Text(L.gistLanguageDescription)
                 }
                 
                 // Message Period Section
@@ -58,128 +51,49 @@ struct SettingsView: View {
                         } label: {
                             HStack {
                                 Image(systemName: period.icon)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.primary)
                                     .frame(width: 30)
                                 
-                                Text(period.rawValue)
+                                Text(period.displayName)
                                     .foregroundColor(.primary)
                                 
                                 Spacer()
                                 
                                 if settings.messagePeriod == period {
                                     Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(.primary)
                                         .fontWeight(.semibold)
                                 }
                             }
                         }
                     }
                 } header: {
-                    Text("Message Count Period")
+                    Text(L.messageCountPeriod)
                 } footer: {
-                    Text("Show unread message count for the selected time period on the source selection screen")
+                    Text(L.messageCountPeriodDescription)
                 }
                 
                 // About Section
                 Section {
                     HStack {
-                        Text("Version")
+                        Text(L.version)
                         Spacer()
                         Text("1.0")
                             .foregroundColor(.secondary)
                     }
                     
                     HStack {
-                        Text("App")
+                        Text(L.app)
                         Spacer()
                         Text("Gisty")
                             .foregroundColor(.secondary)
                     }
                 } header: {
-                    Text("About")
+                    Text(L.about)
                 }
             }
-            .navigationTitle("Settings")
-            .sheet(isPresented: $showApiKeyInput) {
-                apiKeyInputSheet
-            }
-            .alert("Success", isPresented: $showSaveMessage) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                if let message = saveMessage {
-                    Text(message)
-                }
-            }
+            .navigationTitle(L.settings)
         }
-    }
-    
-    // MARK: - API Key Input Sheet
-    
-    private var apiKeyInputSheet: some View {
-        NavigationView {
-            Form {
-                Section {
-                    Text("Enter your OpenAI API key to enable gist generation")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Section(header: Text("API Key")) {
-                    SecureField("sk-proj-...", text: $openAIApiKey)
-                        .textContentType(.password)
-                        .autocapitalization(.none)
-                        .autocorrectionDisabled()
-                }
-                
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("How to get your API key:")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                        
-                        Text("1. Go to platform.openai.com")
-                        Text("2. Sign up or log in")
-                        Text("3. Navigate to API Keys section")
-                        Text("4. Create a new secret key")
-                        Text("5. Copy and paste it here")
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                }
-            }
-            .navigationTitle("OpenAI API Key")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        showApiKeyInput = false
-                    }
-                }
-                
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveApiKey()
-                    }
-                    .disabled(openAIApiKey.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-            }
-        }
-    }
-    
-    // MARK: - Methods
-    
-    private func saveApiKey() {
-        let trimmedKey = openAIApiKey.trimmingCharacters(in: .whitespaces)
-        
-        guard !trimmedKey.isEmpty else { return }
-        
-        ConfigurationManager.shared.openAIApiKey = trimmedKey
-        
-        saveMessage = "OpenAI API key saved successfully"
-        showSaveMessage = true
-        showApiKeyInput = false
-        
-        print("✅ OpenAI API key saved")
     }
 }
 

@@ -17,6 +17,7 @@ struct FeedView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showSettings = false
+    @State private var selectedGist: Gist?
     
     // Dependencies for generation
     @State private var messageCollector: MessageCollector?
@@ -33,14 +34,13 @@ struct FeedView: View {
                 }
                 
                 if isRefreshing {
-                    ProgressView("Generating gists...")
+                    ProgressView(L.generatingGists)
                         .padding()
                         .background(Color(uiColor: .systemBackground))
                         .cornerRadius(10)
-                        .shadow(radius: 10)
                 }
             }
-            .navigationTitle("Gists")
+            .navigationTitle(L.appName)
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -49,11 +49,23 @@ struct FeedView: View {
                     }
                 }
             }
+            .onAppear {
+                // Make navigation title 20% larger
+                let appearance = UINavigationBarAppearance()
+                appearance.configureWithDefaultBackground()
+                
+                // Large title font (20% larger)
+                let largeTitleFont = UIFont.systemFont(ofSize: 40.8, weight: .bold) // Default 34 * 1.2 = 40.8
+                appearance.largeTitleTextAttributes = [.font: largeTitleFont]
+                
+                UINavigationBar.appearance().standardAppearance = appearance
+                UINavigationBar.appearance().scrollEdgeAppearance = appearance
+            }
             .task {
                 await onAppear()
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) {}
+            .alert(L.error, isPresented: $showError) {
+                Button(L.ok, role: .cancel) {}
             } message: {
                 Text(errorMessage)
             }
@@ -71,11 +83,11 @@ struct FeedView: View {
                 .font(.system(size: 64))
                 .foregroundColor(.gray)
             
-            Text("No Gists Yet")
+            Text(L.noGistsYet)
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("Generate summaries from your Telegram chats")
+            Text(L.generateSummariesDescription)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -88,12 +100,12 @@ struct FeedView: View {
             }) {
                 HStack {
                     Image(systemName: "sparkles")
-                    Text("Generate Gists")
+                    Text(L.generateGists)
                         .fontWeight(.semibold)
                 }
                 .frame(maxWidth: 200)
                 .padding()
-                .background(Color.blue)
+                .background(Color.black)
                 .foregroundColor(.white)
                 .cornerRadius(12)
             }
@@ -104,16 +116,21 @@ struct FeedView: View {
     private var gistListView: some View {
         List {
             ForEach(gists) { gist in
-                NavigationLink(destination: GistDetailView(gist: gist, telegram: telegram)) {
-                    GistCard(gist: gist, telegram: telegram)
-                }
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                .listRowSeparator(.hidden)
+                GistCard(gist: gist, telegram: telegram)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedGist = gist
+                    }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowSeparator(.hidden)
             }
         }
         .listStyle(.plain)
         .refreshable {
             await refreshGists()
+        }
+        .sheet(item: $selectedGist) { gist in
+            GistDetailView(gist: gist, telegram: telegram)
         }
     }
     
@@ -131,30 +148,41 @@ struct FeedView: View {
     
     private func loadGists() {
         do {
-            gists = try dataManager.fetchRecentGists(limit: 50)
+            let allGists = try dataManager.fetchRecentGists(limit: 50)
+            
+            // Filter gists by current language setting
+            let currentLocale = UserSettings.shared.language.code
+            gists = allGists.filter { $0.locale == currentLocale }
+            
+            print("📊 Loaded \(allGists.count) total gists, \(gists.count) in \(currentLocale)")
         } catch {
             print("Error loading gists: \(error)")
         }
     }
     
     private func setupServices() {
-        guard let apiKey = ConfigurationManager.shared.openAIApiKey,
+        // Use OpenRouter with Claude 3.5 Haiku for best quality/speed ratio
+        guard let apiKey = ConfigurationManager.shared.openRouterApiKey,
               !apiKey.isEmpty else {
-            print("⚠️ OpenAI API key not configured")
+            AppLogger.warning("⚠️ OpenRouter API key not configured", category: AppLogger.ai)
             return
         }
         
         let collector = MessageCollector(telegram: telegram, dataManager: dataManager)
         let llm = LLMService(config: LLMService.Config(
-            provider: .openai,
-            model: "gpt-4o-mini",
-            apiKey: apiKey
+            provider: .openrouter,
+            model: "anthropic/claude-haiku-4.5",  // ⚠️ HAIKU 4.5!
+            apiKey: apiKey,
+            maxTokens: 1000,
+            temperature: 0.3
         ))
         let generator = GistGenerator(
             messageCollector: collector,
             llmService: llm,
             dataManager: dataManager
         )
+        
+        AppLogger.logAI("✅ LLM Service configured: OpenRouter (Claude Haiku 4.5)")
         
         messageCollector = collector
         llmService = llm
@@ -172,8 +200,8 @@ struct FeedView: View {
         }
         
         // Check if OpenAI key is configured
-        guard ConfigurationManager.shared.hasValidOpenAICredentials else {
-            errorMessage = "Please configure OpenAI API key in Settings"
+        guard ConfigurationManager.shared.hasValidOpenRouterCredentials else {
+            errorMessage = "Please configure OpenRouter API key in Settings"
             showError = true
             return
         }
@@ -188,21 +216,21 @@ struct FeedView: View {
         // Check if sources are selected
         guard let selectedSources = try? dataManager.fetchSelectedSources(),
               !selectedSources.isEmpty else {
-            errorMessage = "Please select sources in the Sources tab first"
+            errorMessage = L.pleaseSelectSources
             showError = true
             return
         }
         
         // Check if OpenAI API key is configured
-        guard ConfigurationManager.shared.hasValidOpenAICredentials else {
-            errorMessage = "Please configure OpenAI API key in Settings"
+        guard ConfigurationManager.shared.hasValidOpenRouterCredentials else {
+            errorMessage = L.pleaseConfigureAPIKey
             showError = true
             return
         }
         
         // Check if generator is ready
         guard let generator = gistGenerator else {
-            errorMessage = "LLM service not configured. Please restart the app."
+            errorMessage = L.llmServiceNotConfigured
             showError = true
             return
         }
@@ -210,11 +238,14 @@ struct FeedView: View {
         isRefreshing = true
         defer { isRefreshing = false }
         
+        // Get selected language from settings
+        let locale = UserSettings.shared.language.code
+        
         do {
-            print("📝 Generating gists for \(selectedSources.count) sources...")
+            print("📝 Generating gists for \(selectedSources.count) sources in \(locale)...")
             
-            // Generate gists for default period (24 hours)
-            let generatedGists = try await generator.generateGists(period: .twentyFourHours, locale: "en")
+            // Generate gists for default period (72 hours)
+            let generatedGists = try await generator.generateGists(period: .seventyTwoHours, locale: locale)
             
             print("✅ Generated \(generatedGists.count) gists")
             
@@ -239,13 +270,25 @@ struct GistCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
-            HStack {
-                Image(systemName: gist.source?.type.icon ?? "message")
-                    .foregroundColor(.blue)
+            HStack(spacing: 12) {
+                // Avatar
+                if let source = gist.source {
+                    SourceAvatarView(
+                        chatId: source.id,
+                        title: source.title,
+                        telegram: telegram,
+                        size: 40
+                    )
+                } else {
+                    Circle()
+                        .fill(Color.secondary.opacity(0.3))
+                        .frame(width: 40, height: 40)
+                }
                 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2.67) {
                     Text(gist.source?.title ?? "Unknown Source")
                         .font(.headline)
+                        .lineSpacing(-3.6) // 20% reduction from default line height
                     
                     Text(periodText)
                         .font(.caption)
@@ -267,13 +310,13 @@ struct GistCard: View {
                 .lineLimit(isExpanded ? nil : 3)
             
             if !isExpanded && gist.summary.count > 150 {
-                Button("Read more") {
+                Button(L.readMore) {
                     withAnimation {
                         isExpanded = true
                     }
                 }
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundColor(.primary)
             }
             
             // Bullets
@@ -282,28 +325,9 @@ struct GistCard: View {
                     ForEach(gist.bullets.prefix(isExpanded ? 100 : 3), id: \.self) { bullet in
                         HStack(alignment: .top, spacing: 8) {
                             Text("•")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.primary)
                             Text(bullet)
                                 .font(.subheadline)
-                        }
-                    }
-                }
-                .padding(.top, 4)
-            }
-            
-            // Links
-            if !gist.links.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(gist.links.prefix(isExpanded ? 100 : 2), id: \.url) { link in
-                        Link(destination: URL(string: link.url) ?? URL(string: "https://google.com")!) {
-                            HStack {
-                                Image(systemName: "link")
-                                    .font(.caption)
-                                Text(link.title)
-                                    .font(.caption)
-                                    .lineLimit(1)
-                            }
-                            .foregroundColor(.blue)
                         }
                     }
                 }
@@ -319,27 +343,22 @@ struct GistCard: View {
                     .foregroundColor(.secondary)
                 
                 Spacer()
-                
-                Text(gist.modelUsed)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(4)
             }
         }
         .padding()
         .background(Color(uiColor: .secondarySystemBackground))
         .cornerRadius(12)
-        .shadow(radius: 2)
     }
     
     private var periodText: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return "\(formatter.string(from: gist.periodStart)) - \(formatter.string(from: gist.periodEnd))"
+        guard let source = gist.source else { return "" }
+        
+        switch source.type {
+        case .channel:
+            return "Канал"
+        case .group, .privateChat:
+            return "Чат"
+        }
     }
 }
 
