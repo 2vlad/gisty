@@ -43,6 +43,11 @@ struct FeedView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Text("Gisty")
+                        .font(.system(size: 20, weight: .bold))
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showSettings = true }) {
                         Image(systemName: "gearshape")
@@ -235,9 +240,27 @@ struct FeedView: View {
             
             // Filter gists by current language setting
             let currentLocale = UserSettings.shared.language.code
-            gists = allGists.filter { $0.locale == currentLocale }
+            let localeFiltered = allGists.filter { $0.locale == currentLocale }
             
-            print("📊 Loaded \(allGists.count) total gists, \(gists.count) in \(currentLocale)")
+            // Group by sourceId and keep only the most recent gist for each source
+            var latestGistsBySource: [Int64: Gist] = [:]
+            for gist in localeFiltered {
+                let sourceId = gist.sourceId
+                if let existing = latestGistsBySource[sourceId] {
+                    // Keep the more recent one
+                    if gist.generatedAt > existing.generatedAt {
+                        latestGistsBySource[sourceId] = gist
+                    }
+                } else {
+                    latestGistsBySource[sourceId] = gist
+                }
+            }
+            
+            // Convert back to array and sort by generated date (newest first)
+            gists = latestGistsBySource.values
+                .sorted { $0.generatedAt > $1.generatedAt }
+            
+            print("📊 Loaded \(allGists.count) total gists, \(localeFiltered.count) in \(currentLocale), \(gists.count) unique sources")
         } catch {
             print("Error loading gists: \(error)")
         }
