@@ -13,6 +13,34 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                // Appearance Section
+                Section {
+                    ForEach(AppTheme.allCases, id: \.self) { theme in
+                        Button {
+                            settings.appTheme = theme
+                        } label: {
+                            HStack {
+                                Image(systemName: theme.icon)
+                                    .foregroundColor(.primary)
+                                    .frame(width: 30)
+                                
+                                Text(theme.displayName)
+                                    .foregroundColor(.primary)
+                                
+                                Spacer()
+                                
+                                if settings.appTheme == theme {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.primary)
+                                        .fontWeight(.semibold)
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    Text(L.appearance)
+                }
+                
                 // Language Section
                 Section {
                     ForEach(Language.allCases, id: \.self) { language in

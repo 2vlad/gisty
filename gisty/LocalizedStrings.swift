@@ -109,6 +109,26 @@ struct L {
     
     // MARK: - Settings View
     
+    static var appearance: String {
+        isRu ? "Внешний вид" : "Appearance"
+    }
+    
+    static var theme: String {
+        isRu ? "Тема" : "Theme"
+    }
+    
+    static var systemTheme: String {
+        isRu ? "Системная" : "System"
+    }
+    
+    static var lightTheme: String {
+        isRu ? "Светлая" : "Light"
+    }
+    
+    static var darkTheme: String {
+        isRu ? "Тёмная" : "Dark"
+    }
+    
     static var gistLanguage: String {
         isRu ? "Язык дайджестов" : "Gist Language"
     }

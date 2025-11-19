@@ -16,6 +16,9 @@ struct gistyApp: App {
     // Initialize TelegramManager
     @StateObject private var telegramManager = TelegramManager.shared
     
+    // Initialize UserSettings for theme
+    @StateObject private var settings = UserSettings.shared
+    
     // Loading state for initial app launch
     @State private var isLoading = true
     @State private var initError: String?
@@ -31,6 +34,7 @@ struct gistyApp: App {
                         .modelContainer(dataManager.modelContainer)
                         .environmentObject(dataManager)
                         .environmentObject(telegramManager)
+                        .preferredColorScheme(settings.appTheme.colorScheme)
                         .transition(.opacity)
                 }
             }
