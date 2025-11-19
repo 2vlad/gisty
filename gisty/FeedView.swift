@@ -46,6 +46,7 @@ struct FeedView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Text("Gisty")
                         .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.primary)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -245,7 +246,11 @@ struct FeedView: View {
             // Group by sourceId and keep only the most recent gist for each source
             var latestGistsBySource: [Int64: Gist] = [:]
             for gist in localeFiltered {
-                let sourceId = gist.sourceId
+                // Get sourceId from stored value or fallback to source relationship
+                guard let sourceId = gist.sourceId ?? gist.source?.id else {
+                    continue // Skip gists without source
+                }
+                
                 if let existing = latestGistsBySource[sourceId] {
                     // Keep the more recent one
                     if gist.generatedAt > existing.generatedAt {
