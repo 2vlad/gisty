@@ -25,15 +25,45 @@ struct FontRegistration {
         ]
         
         print("🔤 Registering custom fonts...")
+        print("📁 Bundle path: \(Bundle.main.bundlePath)")
         
         for fontName in fontNames {
-            guard let fontURL = Bundle.main.url(forResource: fontName, withExtension: nil, subdirectory: "Resources/Fonts") else {
+            // Try multiple search strategies
+            var fontURL: URL?
+            
+            // Strategy 1: With subdirectory "Resources/Fonts"
+            fontURL = Bundle.main.url(forResource: fontName, withExtension: nil, subdirectory: "Resources/Fonts")
+            
+            // Strategy 2: Without extension, trying to strip it first
+            if fontURL == nil {
+                let nameWithoutExt = (fontName as NSString).deletingPathExtension
+                let ext = (fontName as NSString).pathExtension
+                fontURL = Bundle.main.url(forResource: nameWithoutExt, withExtension: ext, subdirectory: "Resources/Fonts")
+            }
+            
+            // Strategy 3: Without subdirectory
+            if fontURL == nil {
+                fontURL = Bundle.main.url(forResource: fontName, withExtension: nil)
+            }
+            
+            // Strategy 4: Search in all bundle resources
+            if fontURL == nil, let resourcePath = Bundle.main.resourcePath {
+                let fontPath = (resourcePath as NSString).appendingPathComponent("Resources/Fonts/\(fontName)")
+                if FileManager.default.fileExists(atPath: fontPath) {
+                    fontURL = URL(fileURLWithPath: fontPath)
+                }
+            }
+            
+            guard let url = fontURL else {
                 print("❌ Font file not found: \(fontName)")
+                print("   Tried Resources/Fonts, root, and resource path")
                 continue
             }
             
+            print("📍 Found: \(fontName) at \(url.path)")
+            
             var error: Unmanaged<CFError>?
-            let success = CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error)
+            let success = CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error)
             
             if success {
                 print("✅ Registered: \(fontName)")
