@@ -43,9 +43,9 @@ struct FeedView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .principal) {
                     Text("Gisty")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.primary)
                 }
                 
