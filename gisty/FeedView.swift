@@ -45,7 +45,7 @@ struct FeedView: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Gisty")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.custom("PPNeueMontreal-Bold", size: 23))
                         .foregroundColor(.primary)
                 }
                 
