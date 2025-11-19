@@ -51,12 +51,8 @@ struct FeedView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Image("logo")
-                        .resizable()
-                        .renderingMode(.original)
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 34)
-                        .clipShape(Rectangle())
+                    Text("Gisty")
+                        .font(.custom("PPNeueMontreal-Bold", size: 20))
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
