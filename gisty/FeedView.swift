@@ -34,27 +34,15 @@ struct FeedView: View {
         let _ = print("=== FeedView body called ===")
         
         NavigationStack {
-            ZStack {
+            Group {
                 if gists.isEmpty && !isRefreshing {
                     emptyStateView
                 } else {
                     gistListView
                 }
-                
-                if isRefreshing {
-                    ProgressView(L.generatingGists)
-                        .padding()
-                        .background(Color(uiColor: .systemBackground))
-                        .cornerRadius(10)
-                }
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Text("Gisty")
-                        .font(.custom("PPNeueMontreal-Bold", size: 20))
-                }
-                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showSettings = true }) {
                         Image(systemName: "gearshape")
