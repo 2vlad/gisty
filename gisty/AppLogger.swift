@@ -30,6 +30,12 @@ struct AppLogger {
         data.info("\(message)")
     }
     
+    static func debug(_ message: String, category: Logger) {
+        #if DEBUG
+        category.debug("\(message)")
+        #endif
+    }
+    
     static func warning(_ message: String, category: Logger) {
         category.warning("\(message)")
     }

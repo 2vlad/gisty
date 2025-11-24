@@ -6,12 +6,16 @@
 //
 
 import Foundation
+import Combine
 import SwiftData
 import SwiftUI
 
 @MainActor
 class DataManager: ObservableObject {
     static let shared = DataManager()
+    
+    // Published property to satisfy ObservableObject and notify UI of changes
+    @Published var lastUpdated: Date = Date()
     
     let modelContainer: ModelContainer
     var mainContext: ModelContext {
@@ -39,6 +43,7 @@ class DataManager: ObservableObject {
     
     func save() throws {
         try mainContext.save()
+        self.lastUpdated = Date()
     }
     
     func fetchRecentGists(limit: Int = 50) throws -> [Gist] {
