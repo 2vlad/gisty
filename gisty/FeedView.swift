@@ -15,17 +15,15 @@ struct FeedView: View {
     
     @State private var gists: [Gist] = []
     @State private var isRefreshing = false
-    @State private var showError = false
-    @State private var errorMessage = ""
     @State private var showSettings = false
     @State private var selectedGist: Gist?
     
-    // Dependencies for generation
+    // Dependencies
     @State private var messageCollector: MessageCollector?
     @State private var llmService: LLMService?
     @State private var gistGenerator: GistGenerator?
     
-    // Smart architecture dependencies (Etap 2)
+    // Smart architecture dependencies
     @State private var fetchScheduler: FetchScheduler?
     @State private var incrementalFetcher: IncrementalFetcher?
     @State private var updateRouter: TelegramUpdateRouter?
@@ -33,127 +31,107 @@ struct FeedView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // White background
-                Color.white.ignoresSafeArea()
+                GistyTokens.Colors.bgApp.ignoresSafeArea()
                 
                 if gists.isEmpty && !isRefreshing {
                     emptyStateView
                 } else {
-                    // Custom List Layout
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            // Header "Upcoming"
-                            HStack(spacing: 8) {
-                                Image(systemName: "calendar")
-                                    .font(.title2)
-                                    .foregroundColor(.red)
-                                Text("Upcoming")
-                                    .font(.custom("PPNeueMontreal-Bold", size: 24))
-                                    .foregroundColor(.black)
-                                Spacer()
-                            }
-                            .padding(.horizontal, 24)
-                            .padding(.top, 20)
-                            .padding(.bottom, 10)
+                            // Global Header
+                            headerView
                             
-                            // Grouped Items
+                            // Grouped Items by Date
                             ForEach(groupedGists, id: \.date) { section in
                                 DaySectionView(date: section.date, gists: section.gists) { gist in
                                     selectedGist = gist
                                 }
                             }
                         }
-                        .padding(.bottom, 80) // Space for bottom bar
+                        .padding(.bottom, 80)
+                    }
+                    .refreshable {
+                        await refreshGists()
                     }
                 }
             }
             .toolbar {
-                 // Minimal toolbar or hidden if implementing custom bottom bar
                  ToolbarItem(placement: .navigationBarTrailing) {
                      Button(action: { showSettings = true }) {
                          Image(systemName: "gearshape")
-                             .foregroundColor(.black)
+                             .foregroundColor(GistyTokens.Colors.textPrimary)
                      }
                  }
             }
-            .task {
-                await onAppear()
-            }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
-            }
+            .task { await onAppear() }
+            .sheet(isPresented: $showSettings) { SettingsView() }
             .sheet(item: $selectedGist) { gist in
                 GistDetailView(gist: gist, telegram: telegram)
             }
         }
     }
     
-    // MARK: - Computed Properties
+    // MARK: - Components
+    
+    private var headerView: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "calendar")
+                .font(.title2)
+                .foregroundColor(GistyTokens.Colors.heatHigh)
+            Text("Agenda")
+                .font(.custom(GistyTokens.Typography.fontNameBold, size: 32))
+                .foregroundColor(GistyTokens.Colors.textPrimary)
+            Spacer()
+        }
+        .padding(.horizontal, GistyTokens.Spacing.l)
+        .padding(.top, GistyTokens.Spacing.m)
+        .padding(.bottom, GistyTokens.Spacing.xl)
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 64))
+                .foregroundColor(GistyTokens.Colors.textSecondary)
+            
+            Text(L.noGistsYet)
+                .font(.custom(GistyTokens.Typography.fontName, size: 20))
+            
+            Button(action: { Task { await refreshGists() } }) {
+                Text(L.generateGists)
+                    .font(.custom(GistyTokens.Typography.fontName, size: 16))
+                    .padding()
+                    .background(GistyTokens.Colors.textPrimary)
+                    .foregroundColor(.white)
+                    .cornerRadius(16)
+            }
+        }
+    }
+    
+    // MARK: - Logic
     
     private var groupedGists: [(date: Date, gists: [Gist])] {
         let grouped = Dictionary(grouping: gists) { gist in
             Calendar.current.startOfDay(for: gist.generatedAt)
         }
         return grouped.map { (date: $0.key, gists: $0.value) }
-            .sorted { $0.date < $1.date } // Sorted ascending (Upcoming)
+            .sorted { $0.date < $1.date }
     }
-    
-    // MARK: - Views
-    
-    private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 64))
-                .foregroundColor(.gray)
-            
-            Text(L.noGistsYet)
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Button(action: {
-                Task {
-                    await refreshGists()
-                }
-            }) {
-                HStack {
-                    Image(systemName: "sparkles")
-                    Text(L.generateGists)
-                        .fontWeight(.semibold)
-                }
-                .padding()
-                .background(Color.black)
-                .foregroundColor(.white)
-                .cornerRadius(16)
-            }
-            .disabled(isRefreshing)
-        }
-    }
-    
-    // MARK: - Methods
     
     private func onAppear() async {
         loadGists()
         setupServices()
-        if gists.isEmpty, !isRefreshing {
-            await autoGenerateIfNeeded()
-        }
+        if gists.isEmpty, !isRefreshing { await autoGenerateIfNeeded() }
     }
     
     private func loadGists() {
         do {
             let allGists = try dataManager.fetchRecentGists(limit: 50)
-            // Filter and sort logic...
-            // For now, just simple sorting for the demo
             gists = allGists.sorted { $0.generatedAt < $1.generatedAt }
-        } catch {
-            print("Error loading gists: \(error)")
-        }
+        } catch { print("Error: \(error)") }
     }
     
     private func setupServices() {
-        // ... (Keep existing service setup code) ...
-        // Re-implementing briefly for context or assume it's there.
-        // For the sake of the edit, I'll reuse the existing logic structure from previous file content.
         guard let apiKey = ConfigurationManager.shared.openRouterApiKey, !apiKey.isEmpty else { return }
         
         let scheduler = FetchScheduler(dataManager: dataManager)
@@ -172,29 +150,20 @@ struct FeedView: View {
         gistGenerator = GistGenerator(messageCollector: collector, llmService: llm, dataManager: dataManager)
     }
     
-    private func autoGenerateIfNeeded() async {
-        await refreshGists()
-    }
+    private func autoGenerateIfNeeded() async { await refreshGists() }
     
     private func refreshGists() async {
-        guard !isRefreshing else { return }
-        guard let generator = gistGenerator else { return }
-        
+        guard !isRefreshing, let generator = gistGenerator else { return }
         isRefreshing = true
         defer { isRefreshing = false }
-        
         do {
-            let locale = UserSettings.shared.language.code
-            _ = try await generator.generateGists(period: .seventyTwoHours, locale: locale)
+            _ = try await generator.generateGists(period: .seventyTwoHours, locale: UserSettings.shared.language.code)
             loadGists()
-        } catch {
-            errorMessage = error.localizedDescription
-            showError = true
-        }
+        } catch { print(error) }
     }
 }
 
-// MARK: - Day Section View
+// MARK: - Day Section
 
 struct DaySectionView: View {
     let date: Date
@@ -205,38 +174,29 @@ struct DaySectionView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Date Header
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            // Date Header (Sticky-like feel but static for now)
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(dayNumber)
-                    .font(.custom("EBGaramond-Regular", size: 42)) // Large serif number
-                    .fontWeight(.medium)
-                    .foregroundColor(.black)
+                    .font(GistyTokens.Typography.dateBig)
+                    .foregroundColor(GistyTokens.Colors.textPrimary)
                 
                 Text(dayName)
-                    .font(.custom("EBGaramond-Regular", size: 24)) // Serif day name
-                    .foregroundColor(.gray)
+                    .font(GistyTokens.Typography.dateLabel)
+                    .foregroundColor(GistyTokens.Colors.textSecondary)
                 
                 Spacer()
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 32)
-            .padding(.bottom, 16)
+            .padding(.horizontal, GistyTokens.Spacing.l)
+            .padding(.bottom, GistyTokens.Spacing.l)
             
-            Divider()
-                .padding(.leading, 24)
-                .opacity(0.5)
-            
-            // Items
-            VStack(spacing: 0) {
+            // List of Items
+            VStack(spacing: GistyTokens.Spacing.xxl) { // Big breathing space between items
                 ForEach(gists) { gist in
                     AgendaRow(gist: gist)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            onTap(gist)
-                        }
+                        .onTapGesture { onTap(gist) }
                 }
             }
-            .padding(.top, 16)
+            .padding(.bottom, GistyTokens.Spacing.xxl) // Space after section
         }
     }
     
@@ -247,65 +207,135 @@ struct DaySectionView: View {
     }
     
     private var dayName: String {
-        if calendar.isDateInToday(date) {
-            return "Today"
-        } else if calendar.isDateInTomorrow(date) {
-            return "Tomorrow"
-        }
+        if calendar.isDateInToday(date) { return "Today" }
+        if calendar.isDateInTomorrow(date) { return "Tomorrow" }
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE"
         return formatter.string(from: date)
     }
 }
 
-// MARK: - Agenda Row
+// MARK: - Agenda Row (The Core UI)
 
 struct AgendaRow: View {
     let gist: Gist
     
+    // Heat logic based on message count
+    private var heatColor: Color {
+        let count = gist.messagesCount
+        if count < 10 { return GistyTokens.Colors.heatLow }
+        if count < 50 { return GistyTokens.Colors.heatMedium }
+        return GistyTokens.Colors.heatHigh
+    }
+    
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            // Time
-            Text(timeString)
-                .font(.custom("PPNeueMontreal-Medium", size: 16))
-                .foregroundColor(GistyTokens.Colors.textGold) // Gold color
-                .frame(width: 80, alignment: .leading)
+        HStack(alignment: .top, spacing: 0) {
             
-            // Content
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .top) {
-                    Text(gist.source?.title ?? "Event")
-                        .font(.custom("PPNeueMontreal-Medium", size: 16))
-                        .foregroundColor(.black)
+            // 1. Left Column: Time & Heat
+            VStack(alignment: .leading, spacing: 6) {
+                Text(timeString)
+                    .font(GistyTokens.Typography.time)
+                    .foregroundColor(heatColor) // Time is colored by heat
+                
+                // Visual bar indicating "volume"
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(heatColor.opacity(0.3))
+                    .frame(width: 4, height: 24)
+            }
+            .frame(width: 80, alignment: .leading)
+            .padding(.leading, GistyTokens.Spacing.l)
+            
+            // 2. Right Column: Content
+            VStack(alignment: .leading, spacing: GistyTokens.Spacing.s) {
+                
+                // Title Row: Icon + Name
+                HStack(spacing: 8) {
+                    sourceIcon
+                        .frame(width: 18, height: 18)
+                        .foregroundColor(GistyTokens.Colors.textPrimary)
                     
-                    // Optional: Icons based on content
-                    if isUrgent {
-                         Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundColor(.red)
-                    }
+                    Text(gist.source?.title ?? "Source")
+                        .font(GistyTokens.Typography.sourceTitle)
+                        .foregroundColor(GistyTokens.Colors.textPrimary)
+                        .lineLimit(1)
+                    
+                    Spacer()
+                    
+                    // Message Count Badge
+                    Text("\(gist.messagesCount)")
+                        .font(GistyTokens.Typography.meta)
+                        .foregroundColor(heatColor)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(heatColor.opacity(0.1))
+                        .cornerRadius(6)
                 }
                 
-                Text(gist.summary.prefix(50) + "...")
-                     .font(.custom("PPNeueMontreal-Book", size: 14))
-                     .foregroundColor(.gray)
-                     .lineLimit(1)
+                // Summary Text
+                Text(gist.summary)
+                    .font(GistyTokens.Typography.summary)
+                    .foregroundColor(GistyTokens.Colors.textSecondary)
+                    .lineLimit(3) // Allow a bit more text
+                    .lineSpacing(4) // More air between lines
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            
-            Spacer()
+            .padding(.trailing, GistyTokens.Spacing.l)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 8)
+        .contentShape(Rectangle())
     }
     
     private var timeString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
+        formatter.dateFormat = "HH:mm"
         return formatter.string(from: gist.generatedAt)
     }
     
-    private var isUrgent: Bool {
-        // Simple check for demo
-        return gist.summary.lowercased().contains("urgent")
+    // Custom Icon Selection
+    @ViewBuilder
+    private var sourceIcon: some View {
+        if let type = gist.source?.type {
+            switch type {
+            case .channel:
+                IconShapes.Megaphone()
+            case .group:
+                IconShapes.BubbleDouble()
+            case .privateChat:
+                IconShapes.Person()
+            }
+        } else {
+            IconShapes.Megaphone() // Default
+        }
+    }
+}
+
+// MARK: - Custom Shapes (Iconography)
+
+struct IconShapes {
+    
+    // Channel Icon (Broadcast/Megaphone style)
+    struct Megaphone: View {
+        var body: some View {
+            Image(systemName: "megaphone") // System for reliability, refined size
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        }
+    }
+    
+    // Group Icon (Chat Bubbles)
+    struct BubbleDouble: View {
+        var body: some View {
+            Image(systemName: "bubble.left.and.bubble.right")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        }
+    }
+    
+    // Private Chat Icon (Person)
+    struct Person: View {
+        var body: some View {
+            Image(systemName: "person")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        }
     }
 }
