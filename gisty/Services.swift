@@ -61,12 +61,28 @@ class GistGenerator {
 // MARK: - Rate Limiter
 
 class RateLimiter {
+    private var lastRequestTime: [Int64: Date] = [:]
+    private let minInterval: TimeInterval = 0.1 // 100ms between requests
+    
     func wait() async {
         // No-op
     }
     
-    func acquire() async {
-        // Stub: In real implementation, would throttle requests
+    func acquire(for chatId: Int64? = nil) async {
+        // Stub: In real implementation, would throttle requests per chat
+        if let chatId = chatId, let lastTime = lastRequestTime[chatId] {
+            let elapsed = Date().timeIntervalSince(lastTime)
+            if elapsed < minInterval {
+                let delay = minInterval - elapsed
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            }
+        }
+        
+        if let chatId = chatId {
+            lastRequestTime[chatId] = Date()
+        }
+        
+        // General throttle
         try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s delay
     }
 }

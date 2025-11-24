@@ -49,7 +49,7 @@ class IncrementalFetcher: ObservableObject {
         AppLogger.logTelegram("🎯 fetchNewMessages() for chatId: \(chatId), lastSeenMsgId: \(lastSeenMsgId ?? 0)")
         
         // 🚀 OPTIMIZATION: First, quickly check if there are new messages
-        let chat = try await client.getChat(chatId: chatId)
+        let chat = try await client.send(GetChat(chatId: chatId))
         
         guard let lastMessageId = chat.lastMessage?.id else {
             AppLogger.logTelegram("ℹ️ Chat \(chatId) has no messages")
@@ -83,12 +83,14 @@ class IncrementalFetcher: ObservableObject {
             // Acquire rate limit token for each batch
             await rateLimiter.acquire(for: chatId)
             
-            let history = try await client.getChatHistory(
-                chatId: chatId,
-                fromMessageId: cursor,
-                limit: pageSize,
-                offset: 0,
-                onlyLocal: false
+            let history = try await client.send(
+                GetChatHistory(
+                    chatId: chatId,
+                    fromMessageId: cursor,
+                    limit: pageSize,
+                    offset: 0,
+                    onlyLocal: false
+                )
             )
             
             guard let messages = history.messages, !messages.isEmpty else {
