@@ -19,21 +19,20 @@ enum GistyTokens {
     enum Colors {
         // Brand accents
         static let accentRed = Color(hex: 0xFD6457)      // Breaking/important
-        static let accentYellow = Color(hex: 0xFFB910)   // Brand marker, logo
-        static let accentGreen = Color(hex: 0x2F7A45)    // Positive/success (optional)
+        static let accentYellow = Color(hex: 0xD4AF37)   // Time/Gold (darker for readability on white)
+        static let accentGreen = Color(hex: 0x2F7A45)    // Positive/success
         
         // Surface
-        static let surfaceCard = Color(hex: 0xF3F2F0)    // Light "paper" card
+        static let surfaceCard = Color.white             // Clean white surface
+        static let bgApp = Color.white                   // White app background
         
         // Text
-        static let textPrimary = Color(hex: 0x101010)
-        static let textSecondary = Color(hex: 0x6B6B6B)
-        
-        // Background
-        static let bgApp = Color(hex: 0x0F0F10)          // Dark app background
+        static let textPrimary = Color(hex: 0x000000)    // Deep black
+        static let textSecondary = Color(hex: 0x8E8E93)  // Standard gray
+        static let textGold = Color(hex: 0xC5A028)       // Gold text for times
         
         // UI elements
-        static let divider = Color.black.opacity(0.08)
+        static let divider = Color(hex: 0xE5E5EA)        // Light gray divider
         static let badgeBg = Color.black.opacity(0.06)
         static let badgeText = Color(hex: 0x6B6B6B)
     }
