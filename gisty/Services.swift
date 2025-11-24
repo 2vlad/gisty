@@ -64,5 +64,10 @@ class RateLimiter {
     func wait() async {
         // No-op
     }
+    
+    func acquire() async {
+        // Stub: In real implementation, would throttle requests
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s delay
+    }
 }
 

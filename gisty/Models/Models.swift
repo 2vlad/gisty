@@ -20,6 +20,14 @@ enum SourceType: String, Codable {
     case channel
     case group
     case privateChat
+    
+    var icon: String {
+        switch self {
+        case .channel: return "megaphone"
+        case .group: return "person.3"
+        case .privateChat: return "person"
+        }
+    }
 }
 
 @Model
@@ -52,12 +60,15 @@ final class Gist: Identifiable {
     var bullets: [String]
     var locale: String
     var messagesCount: Int
+    var links: [String] // URLs extracted from content
+    var modelUsed: String? // LLM model used for generation
+    var createdAt: Date // When the gist was created
     
     var sourceId: Int64? // Foreign key fallback
     
     @Relationship var source: Source?
     
-    init(id: UUID = UUID(), generatedAt: Date = Date(), summary: String, bullets: [String] = [], locale: String = "en", messagesCount: Int = 0, source: Source? = nil) {
+    init(id: UUID = UUID(), generatedAt: Date = Date(), summary: String, bullets: [String] = [], locale: String = "en", messagesCount: Int = 0, links: [String] = [], modelUsed: String? = nil, source: Source? = nil) {
         self.id = id
         self.generatedAt = generatedAt
         self.summary = summary
@@ -65,6 +76,9 @@ final class Gist: Identifiable {
         self.bullets = bullets
         self.locale = locale
         self.messagesCount = messagesCount
+        self.links = links
+        self.modelUsed = modelUsed
+        self.createdAt = Date()
         self.source = source
         self.sourceId = source?.id
     }

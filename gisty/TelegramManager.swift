@@ -19,13 +19,25 @@ enum AuthState {
     case closed
 }
 
+enum TelegramError: Error {
+    case clientNotInitialized
+    case authenticationFailed
+    case networkError
+    case unknown(String)
+}
+
 class TelegramManager: ObservableObject {
     static let shared = TelegramManager()
     
     @Published var authorizationState: AuthState = .unauthorized
     var updateRouter: TelegramUpdateRouter?
     
-    private var client: TdClient?
+    // Make client accessible for IncrementalFetcher
+    var client: TdClient? {
+        _client
+    }
+    
+    private var _client: TdClient?
     
     init() {
         // Stub
@@ -46,4 +58,3 @@ class TelegramManager: ObservableObject {
         return []
     }
 }
-

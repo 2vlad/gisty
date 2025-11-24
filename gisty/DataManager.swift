@@ -89,4 +89,9 @@ class DataManager: ObservableObject {
         try save()
         return newState
     }
+    
+    func deleteGist(_ gist: Gist) throws {
+        mainContext.delete(gist)
+        try save()
+    }
 }
