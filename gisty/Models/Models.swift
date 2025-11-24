@@ -70,7 +70,45 @@ final class Gist: Identifiable {
     }
 }
 
-// For CacheManager
+@Model
+final class ChatFetchState {
+    @Attribute(.unique) var chatId: Int64
+    var lastFetchedAt: Date?
+    var lastSeenMsgId: Int64?
+    var isFetching: Bool
+    var lastError: String?
+    
+    init(chatId: Int64) {
+        self.chatId = chatId
+        self.isFetching = false
+    }
+    
+    func canFetch(minInterval: TimeInterval) -> Bool {
+        if isFetching { return false }
+        guard let lastFetched = lastFetchedAt else { return true }
+        return Date().timeIntervalSince(lastFetched) >= minInterval
+    }
+    
+    func markFetching() {
+        self.isFetching = true
+        self.lastError = nil
+    }
+    
+    func updateAfterFetch(lastMessageId: Int64?, lastMessageDate: Date?, messageCount: Int) {
+        self.isFetching = false
+        self.lastFetchedAt = Date()
+        if let id = lastMessageId {
+            self.lastSeenMsgId = id
+        }
+    }
+    
+    func updateAfterError(_ error: Error) {
+        self.isFetching = false
+        self.lastError = error.localizedDescription
+    }
+}
+
+// For CacheManager and others
 struct MediaRef: Codable {
     let id: String
     let type: String
@@ -102,12 +140,6 @@ struct GistLink: Codable {
 enum SummaryType: String, Codable {
     case daily
     case weekly
-}
-
-enum ChatFetchState {
-    case idle
-    case fetching
-    case failed(Error)
 }
 
 enum ChatFilterType: CaseIterable {

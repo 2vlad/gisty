@@ -6,8 +6,10 @@
 //
 
 import Foundation
+import Combine
+import SwiftUI
 
-class ConfigurationManager {
+class ConfigurationManager: ObservableObject {
     static let shared = ConfigurationManager()
     
     @Published var openRouterApiKey: String? {

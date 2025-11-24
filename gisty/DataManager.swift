@@ -18,17 +18,27 @@ class DataManager: ObservableObject {
         modelContainer.mainContext
     }
     
+    // Alias for consistency with other parts of the app
+    var modelContext: ModelContext {
+        mainContext
+    }
+    
     private init() {
         do {
             let schema = Schema([
                 Gist.self,
-                Source.self
+                Source.self,
+                ChatFetchState.self
             ])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             self.modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
+    }
+    
+    func save() throws {
+        try mainContext.save()
     }
     
     func fetchRecentGists(limit: Int = 50) throws -> [Gist] {
@@ -56,5 +66,22 @@ class DataManager: ObservableObject {
         )
         return try mainContext.fetch(descriptor).first
     }
+    
+    // MARK: - Fetch State Logic
+    
+    func getOrCreateFetchState(for chatId: Int64) throws -> ChatFetchState {
+        let descriptor = FetchDescriptor<ChatFetchState>(
+            predicate: #Predicate<ChatFetchState> { $0.chatId == chatId }
+        )
+        
+        if let existing = try mainContext.fetch(descriptor).first {
+            return existing
+        }
+        
+        let newState = ChatFetchState(chatId: chatId)
+        mainContext.insert(newState)
+        // Auto-save for creation is usually good to ensure ID persistence
+        try save()
+        return newState
+    }
 }
-
